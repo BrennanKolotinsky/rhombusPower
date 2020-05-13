@@ -38,15 +38,22 @@ class createSql {
 		$row = 1;
 		$input = fopen("LOCATION.csv", "r");
 		$output = fopen("location.sql", "w");
+
+		if ($test === true) {
+			$input = fopen("locationTest.csv", "r");
+			$output = fopen("locationTest.sql", "w");
+		}
+
 		$percent = 0;
 
-		if ($input !== NULL) {
+		if ($input !== false) {
 		  
 			while (($data = fgetcsv($input, 1000, ",")) !== false) {
 
 				// one test runs, let's break after one hundred lines have been created
-				if ($test && $row > 100)
+				if ($test && $row > 100) {
 					break;
+				}
 
 				// every 67500 rows we have finished another 2.5% approximately
 				if ($row % 67500 == 0) {
@@ -61,6 +68,11 @@ class createSql {
 
 				$row++;
 				fwrite($output, $sql);
+			}
+
+			if ($test === true) {
+				sort($this->minIp);
+				sort($this->maxIp);
 			}
 
 			// free up resources
@@ -81,7 +93,12 @@ class createSql {
 		$input = fopen("IP_addresses.csv", "r");
 		$output = fopen("ip.sql", "w");
 
-		if ($input !== NULL) {
+		if ($test === true) {
+			$input = fopen("ipTest.csv", "r");
+			$output = fopen("ipTest.sql", "w");
+		}
+
+		if ($input !== false) {
 
 			$data = fgetcsv($input, 1000, ","); // skip the first row because of headers
 		  
@@ -96,8 +113,8 @@ class createSql {
 				//echo $longIp;
 				//echo "\n";
 				$correspondingLocationId = 0;
-				//$correspondingLocationId = $this->binarySearch($longIp);
-		    
+				$correspondingLocationId = $this->binarySearch($data[0]);
+
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
 				$row++;
@@ -123,17 +140,19 @@ class createSql {
 		$lo = 0;
 		$hi = sizeof($this->minIp);
 
-		while ($lo <= $high) {
+		while ($lo <= $hi) {
 
 			$mid = (int) ($lo + ($hi - $lo) / 2); // prevents overflow! (rather than (lo + hi) / 2)
 
-			if ($this->minIp[$mid] < $ip4 && $this->maxIp[$mid] > $ip4)
+			if ($this->minIp[$mid] <= $ip4 && $this->maxIp[$mid] >= $ip4)
 				return $mid + 1;
 			# we are less than the current point
-			else if ($this->minIp[$mid] > $ip4)
+			else if ($this->minIp[$mid] < $ip4)
 				$lo = $mid + 1;
-			else
+			else if ($this->maxIp[$mid] > $ip4)
 				$hi = $mid - 1;
+			else
+				echo "here";
 		}
 
 		return $lo + 1; // +1 because the ID starts at 1 (not zero)
@@ -154,4 +173,5 @@ class createSql {
 }
 
 $obj = new createSql();
-$obj->buildSQL();
+$obj->test();
+#$obj->buildSQL();
