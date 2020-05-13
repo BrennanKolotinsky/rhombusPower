@@ -1,5 +1,7 @@
 <?php
 
+ini_set("memory_limit",-1); # increase memory to store large arrays
+
 class createSql {
 
 	private $minIp; # min and max ip are two arrays, we use to run a binary search to connect our sql statements (thanks leetcode for the ideas!)
@@ -18,27 +20,39 @@ class createSql {
 	function buildSQL() {
 		# let's create both of the sql files here
 		echo "Starting!";
-		$this->createLocation();
+		$this->createLocation(false);
 		echo "\nFinished Location creation, now let's create the IPs!";
 
-		$this->createIP();
+		$this->createIP(false);
 		echo "\nFinished creating all SQL";
 	}
 
 	/*
 	This function creates the SQL to insert into the location table
-	Input: None
+	Input:
+		Boolean testing -- indicates whether we are currently testing
 	Output: None
 	*/
-	function createLocation() {
+	function createLocation($test = false) {
 		
 		$row = 1;
 		$input = fopen("LOCATION.csv", "r");
 		$output = fopen("location.sql", "w");
+		$percent = 0;
 
 		if ($input !== NULL) {
 		  
-			while (($data = fgetcsv($input, 1000, ",")) !== NULL && $row < 100) {
+			while (($data = fgetcsv($input, 1000, ",")) !== false) {
+
+				// one test runs, let's break after one hundred lines have been created
+				if ($test && $row > 100)
+					break;
+
+				// every 67500 rows we have finished another 2.5% approximately
+				if ($row % 67500 == 0) {
+					$percent += 2.5;
+					echo "\n{$percent} %";
+				}
 
 				$this->minIp[$row - 1] = $data[0];
 				$this->maxIp[$row - 1] = $data[1];
@@ -57,10 +71,11 @@ class createSql {
 
 	/*
 	This function creates the SQL to insert into the IP table
-	Input: None
+	Input:
+		Boolean testing -- indicates whether we are currently testing
 	Output: None
 	*/
-	function createIP() {
+	function createIP($test = false) {
 		
 		$row = 1;
 		$input = fopen("IP_addresses.csv", "r");
@@ -70,10 +85,18 @@ class createSql {
 
 			$data = fgetcsv($input, 1000, ","); // skip the first row because of headers
 		  
-			while (($data = fgetcsv($input, 1000, ",")) !== NULL && $row < 100) {
+			while (($data = fgetcsv($input, 1000, ",")) !== false) {
 
-				$longIp = ip2long($data[0]);
-				$correspondingLocationId = $this->binarySearch($longIp);
+				// one test runs, let's break after one hundred lines have been created
+				if ($test && $row > 100)
+					break;
+
+				$longIp = ip2long(str_replace("/","",$data[0]));
+
+				//echo $longIp;
+				//echo "\n";
+				$correspondingLocationId = 0;
+				//$correspondingLocationId = $this->binarySearch($longIp);
 		    
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
@@ -120,8 +143,15 @@ class createSql {
 	this is an additional function I used for testing purposes
 	*/
 	function test() {
+		# let's create both of the sql files here
+		echo "Starting!";
+		$this->createLocation(true);
+		echo "\nFinished Location creation, now let's create the IPs!";
+
+		$this->createIP(true);
+		echo "\nFinished creating all SQL";
 	}
 }
 
 $obj = new createSql();
-$obj->buildSql();
+$obj->buildSQL();
