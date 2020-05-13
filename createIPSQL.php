@@ -36,15 +36,14 @@ class createSql {
 		$input = fopen("LOCATION.csv", "r");
 		$output = fopen("location.sql", "w");
 
-		if ($input !== FALSE) {
+		if ($input !== NULL) {
 		  
-			while (($data = fgetcsv($input, 1000, ",")) !== FALSE && $row < 100) {
+			while (($data = fgetcsv($input, 1000, ",")) !== NULL && $row < 100) {
 
 				$this->minIp[$row - 1] = $data[0];
 				$this->maxIp[$row - 1] = $data[1];
 		    
-				$sql = "INSERT INTO Location (Id, IPFrom, IPTo, CountryISOCode, Country, State, City, Latitude, Longitude)
-				VALUES ('{$row}', '{$data[0]}', '{$data[1]}', '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', '{$data[6]}', '{$data[7]}');";
+				$sql = "INSERT INTO Location (Id, IPFrom, IPTo, CountryISOCode, Country, State, City, Latitude, Longitude) \nVALUES ({$row}, {$data[0]}, {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]});\n\n";
 
 				$row++;
 				fwrite($output, $sql);
@@ -64,30 +63,27 @@ class createSql {
 	function createIP() {
 		
 		$row = 1;
-		$input2 = fopen("IP_addresses.csv", "r");
-		$output2 = fopen("ip.sql", "w");
+		$input = fopen("IP_addresses.csv", "r");
+		$output = fopen("ip.sql", "w");
 
-		if ($input2 !== FALSE) {
+		if ($input !== NULL) {
 
-			$data = fgetcsv($input2, 1000, ","); // skip the first row because of headers
+			$data = fgetcsv($input, 1000, ","); // skip the first row because of headers
 		  
-			while (($data = fgetcsv($input2, 1000, ",") && $row < 100) !== FALSE) {
-		    
+			while (($data = fgetcsv($input, 1000, ",")) !== NULL && $row < 100) {
+
 				$longIp = ip2long($data[0]);
 				$correspondingLocationId = $this->binarySearch($longIp);
-
-				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId)
-				VALUES ('{$row}', '{$data[0]}', '{$data[1]}', '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', '{$data[6]}', '{$data[7]}', '{$correspondingLocationId}');";
+		    
+				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
 				$row++;
-
-				fwrite($output2, $sql);
+				fwrite($output, $sql);
 			}
 
-			echo "Finished!";
-
-		  	fclose($input2); // free up resources
-		  	fclose($output2);
+			// free up resources
+		  	fclose($input);
+		  	fclose($output);
 		}
 	}
 
@@ -106,7 +102,7 @@ class createSql {
 
 		while ($lo <= $high) {
 
-			$mid = $lo + ($hi - $lo) / 2; // prevents overflow! (rather than (lo + hi) / 2)
+			$mid = (int) ($lo + ($hi - $lo) / 2); // prevents overflow! (rather than (lo + hi) / 2)
 
 			if ($this->minIp[$mid] < $ip4 && $this->maxIp[$mid] > $ip4)
 				return $mid + 1;
