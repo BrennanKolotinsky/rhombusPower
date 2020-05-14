@@ -40,8 +40,8 @@ class createSql {
 	function createLocation($test = false) {
 		
 		$row = 1;
-		$input = fopen("../productionData/LOCATION.csv", "r");
-		$output = fopen("../productionData/location.sql", "w");
+		$input = fopen("../realData/LOCATION.csv", "r");
+		$output = fopen("../realData/location.sql", "w");
 
 		if ($test === true) {
 			$input = fopen("../testData/locationTest.csv", "r");
@@ -65,7 +65,7 @@ class createSql {
 					echo "\n{$percent} %";
 				}
 
-				#$this->cleanData($data);
+				$this->cleanData($data);
 
 				$this->minIp[$row - 1] = $data[0];
 				$this->maxIp[$row - 1] = $data[1];
@@ -98,8 +98,8 @@ class createSql {
 	function createIP($test = false) {
 		
 		$row = 1;
-		$input = fopen("../productionData/IP_addresses.csv", "r");
-		$output = fopen("../productionData/ip.sql", "w");
+		$input = fopen("../realData/IP_addresses.csv", "r");
+		$output = fopen("../realData/ip.sql", "w");
 
 		if ($test === true) {
 			$input = fopen("../testData/ipTest.csv", "r");
@@ -122,7 +122,7 @@ class createSql {
 				} else
 					$correspondingLocationId = $this->binarySearch($data[0], $row);
 				
-				#$this->cleanData($data);
+				$this->cleanData($data);
 
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
@@ -148,10 +148,8 @@ class createSql {
 	function cleanData($arr) {
 	  	for ($i = 0; $i < sizeof($arr); $i++) {
 
-	  		$broken = array("\'", "\"");
-
-	  		foreach ($broken as $char)
-				$arr[$i] = str_replace($char, "", $arr[$i]);
+	  		$broken = array("'", "'");
+			$arr[$i] = str_replace($char, "", $arr[$i]);
 	  	}
 		return $arr;
 	}
