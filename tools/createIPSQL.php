@@ -65,7 +65,7 @@ class createSql {
 					echo "\n{$percent} %";
 				}
 
-				$this->cleanData($data);
+				#$this->cleanData($data);
 
 				$this->minIp[$row - 1] = $data[0];
 				$this->maxIp[$row - 1] = $data[1];
@@ -122,7 +122,7 @@ class createSql {
 				} else
 					$correspondingLocationId = $this->binarySearch($data[0], $row);
 				
-				$this->cleanData($data);
+				#$this->cleanData($data);
 
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
