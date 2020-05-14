@@ -16,15 +16,19 @@ class createSql {
 
 	/*
 	This function runs the sql creation processes
+	Input:
+		Boolean testing -- indicates whether we are currently testing
+	Output:
+		None
 	*/
-	function buildSQL() {
+	function buildSQL($test = false) {
 		# let's create both of the sql files here
 		echo "Starting!";
-		$this->createLocation(false);
+		$this->createLocation($test);
 		echo "\nFinished Location creation, now let's create the IPs!";
 
-		$this->createIP(false);
-		echo "\nFinished creating all SQL";
+		$this->createIP($test);
+		echo "\nFinished creating all SQL\n";
 	}
 
 	/*
@@ -110,9 +114,12 @@ class createSql {
 				if ($test && $row > 100)
 					break;
 
-				$longIpRange = $this->cidrToRange($data[0]);
-
-				$correspondingLocationId = $this->binarySearch($longIpRange, $row);
+				if (!$test) {
+					$longIpRange = $this->cidrToRange($data[0]);
+					$correspondingLocationId = $this->binarySearch($longIpRange, $row);
+				} else
+					$correspondingLocationId = $this->binarySearch($data[0], $row);
+				
 
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
@@ -148,7 +155,7 @@ class createSql {
 	This function searches for the appropriate location that associates with this addresses
 	We use binary search to reduce runtime from O(N) to O(logN) -- a significant improvement in large datasets
 	Input:
-		Long ip address range
+		Long ip address range - first value is low end, second value is high end
 	Output:
 		Int location id
 	*/
@@ -176,18 +183,36 @@ class createSql {
 
 		return $lo + 1; // +1 because the ID starts at 1 (not zero)
 	}
-	
-	/*
-	this is an additional function I used for testing purposes
-	*/
-	function test() {
-		# let's create both of the sql files here
-		echo "Starting!";
-		$this->createLocation(true);
-		echo "\nFinished Location creation, now let's create the IPs!";
 
-		$this->createIP(true);
-		echo "\nFinished creating all SQL";
+	/*
+	This function is a slightly modified binary search
+	Input:
+		Long ip address (somewhere in the range)
+	Output:
+		Int location id -- that the ip belongs in the range
+	*/
+	function binaryTest($ip4, $row) {
+		$lo = 0;
+		$hi = sizeof($this->minIp);
+
+		while ($lo <= $hi) {
+
+			$mid = (int) ($lo + ($hi - $lo) / 2); // prevents overflow! (rather than (lo + hi) / 2)
+
+			if ($this->minIp[$mid] <= $ip4 && $this->maxIp[$mid] >= $ip4)
+				return $mid + 1;
+			# we are less than the current point
+			else if ($this->minIp[$mid] < $ip)
+				$lo = $mid + 1;
+			else if ($this->maxIp[$mid] > $ip)
+				$hi = $mid - 1;
+			else {
+				echo "\nSome problem in binary search OR IPv4 value at row {$row}";
+				break;
+			}
+		}
+
+		return $lo + 1; // +1 because the ID starts at 1 (not zero)
 	}
 }
 
@@ -196,10 +221,10 @@ $obj = new createSql();
 // let's determine whether we are testing or writing finished code
 if ($argc > 1) {
   	if ($argv[1] == 'test') {
-	    $obj->test();
+	    $obj->buildSQL(true);
 	}
 	elseif($argv[1] == 'prod') {
-		$obj->buildSQL();
+		$obj->buildSQL(false);
 	}
 } else {
   echo "no argument passed -- please type either of the following: \n";
