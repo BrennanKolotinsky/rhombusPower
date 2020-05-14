@@ -1,6 +1,6 @@
 <?php
 
-ini_set("memory_limit",-1); # increase memory to store large arrays
+ini_set("memory_limit",-1); # increase memory to store large arrays -- in final product this should be set to a different limit AND the php.ini file may need to be changed
 
 class createSql {
 
