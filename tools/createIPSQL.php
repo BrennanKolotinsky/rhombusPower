@@ -65,6 +65,8 @@ class createSql {
 					echo "\n{$percent} %";
 				}
 
+				$this->cleanData($data);
+
 				$this->minIp[$row - 1] = $data[0];
 				$this->maxIp[$row - 1] = $data[1];
 		    
@@ -120,6 +122,7 @@ class createSql {
 				} else
 					$correspondingLocationId = $this->binarySearch($data[0], $row);
 				
+				$this->cleanData($data);
 
 				$sql = "INSERT INTO IPAddress (Id, Network, GeonameId, ContinentCode, ContinentName, CountryISOCode, CountryName, isAnonymousProxy, isSatelliteProvider, LocationId) \nVALUES ({$row}, '{$data[0]}', {$data[1]}, '{$data[2]}', '{$data[3]}', '{$data[4]}', '{$data[5]}', {$data[6]}, {$data[7]}, {$correspondingLocationId});\n\n";
 
@@ -133,6 +136,24 @@ class createSql {
 		} else {
 			echo $test === true ? "\nIP test data not found" : "\nIP production data not found" ;
 		}
+	}
+
+	/*
+	This function removes characters that would otherwise break the SQL insertion statements -- for example quotation marks
+	Input:
+		Array of data
+	Output:
+		Array of data cleaned
+	*/
+	function cleanData($arr) {
+	  	for ($i = 0; $i < sizeof($arr); $i++) {
+
+	  		$broken = array("\'", "\"");
+
+	  		foreach ($broken as $char)
+				$arr[$i] = str_replace($char, "", $arr[$i]);
+	  	}
+		return $arr;
 	}
 
 	/*
